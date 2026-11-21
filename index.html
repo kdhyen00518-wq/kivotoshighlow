@@ -4143,5 +4143,194 @@
   if (bar && !isOuter(bar)) bar.style.display = 'none';
 })();
 </script>
+<style>
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden !important;
+  }
+
+  /* 1) 좌우 50:50 강제 배치 */
+  .mob-arena {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    position: relative !important;
+  }
+
+  /* 2) 카드 내부 여백 축소 */
+  .mob-card {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 10px 7px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 3) 상단 뱃지·학원·동아리 태그 정리 */
+  .mob-card-head {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    margin-bottom: 8px !important;
+  }
+  .mob-card-head * {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+    max-width: 100% !important;
+  }
+
+  /* 4) 초상화 크기 축소 (모바일 좌우 2열 맞춤) */
+  .mob-portrait-box {
+    width: 84px !important;
+    height: 84px !important;
+    margin: 4px auto 6px !important;
+  }
+  .mob-portrait-box img,
+  .mob-portrait-box svg {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* 5) 학생 이름 & 수치 박스 크기 조정 */
+  .mob-stu-name {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+    word-break: keep-all !important;
+  }
+  .mob-stat-box {
+    padding: 10px 5px !important;
+    margin: 8px 0 !important;
+    min-height: auto !important;
+  }
+  .mob-stat-val {
+    font-size: 19px !important;
+    line-height: 1.15 !important;
+    word-break: keep-all !important;
+  }
+
+  /* 6) 오른쪽 카드의 높음/낮음 버튼을 위·아래로 넓게 배치 */
+  .mob-btn-group {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+  .mob-btn-group button {
+    width: 100% !important;
+    padding: 10px 6px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* 7) VS 배지를 두 초상화 사이 빈 공간에 작게 배치 */
+  .mob-vs {
+    position: absolute !important;
+    left: 50% !important;
+    top: 108px !important;
+    transform: translate(-50%, -50%) !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 2px !important;
+    z-index: 20 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .mob-vs > *:first-child {
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+  }
+  .mob-vs > *:last-child {
+    font-size: 7px !important;
+    line-height: 1.1 !important;
+  }
+
+  /* 8) 모바일에서 불필요한 키보드 단축키 문구 숨김 */
+  .mob-hide-mobile {
+    display: none !important;
+  }
+}
+</style>
+
+<script>
+(function () {
+  function applyMobileTags() {
+    const nodes = [...document.querySelectorAll('div, span, p, section, article')];
+    const anchorTag = nodes.find(el => el.children.length === 0 && el.textContent.includes('ANCHOR //'));
+    const challTag = nodes.find(el => el.children.length === 0 && el.textContent.includes('CHALLENGER //'));
+    if (!anchorTag || !challTag) return;
+
+    const ancestors = new Set();
+    let cur = anchorTag;
+    while (cur) { ancestors.add(cur); cur = cur.parentElement; }
+    let arena = challTag;
+    while (arena && !ancestors.has(arena)) arena = arena.parentElement;
+    if (!arena) return;
+
+    const directChild = (el) => {
+      let c = el;
+      while (c && c.parentElement !== arena) c = c.parentElement;
+      return c;
+    };
+
+    const leftCard = directChild(anchorTag);
+    const rightCard = directChild(challTag);
+    if (!leftCard || !rightCard || leftCard === rightCard) return;
+
+    arena.classList.add('mob-arena');
+    leftCard.classList.add('mob-card', 'mob-card-left');
+    rightCard.classList.add('mob-card', 'mob-card-right');
+
+    const vsEl = [...arena.children].find(
+      ch => ch !== leftCard && ch !== rightCard && ch.textContent.includes('VS')
+    );
+    if (vsEl) vsEl.classList.add('mob-vs');
+
+    [leftCard, rightCard].forEach(card => {
+      if (card.firstElementChild) card.firstElementChild.classList.add('mob-card-head');
+
+      const media = card.querySelector('img, svg');
+      if (media && media.parentElement && media.parentElement !== card) {
+        media.parentElement.classList.add('mob-portrait-box');
+      }
+
+      // 이름과 큰 수치 박스 자동 식별
+      [...card.querySelectorAll('h1, h2, h3, div, p, span')].forEach(el => {
+        if (el.children.length > 1) return;
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        if (size >= 28 && !el.classList.contains('mob-stat-val')) {
+          el.classList.add('mob-stat-val');
+          if (el.parentElement && el.parentElement !== card) {
+            el.parentElement.classList.add('mob-stat-box');
+          }
+        } else if (size >= 20 && size < 28 && el.textContent.trim().length > 0 && el.textContent.trim().length <= 16) {
+          el.classList.add('mob-stu-name');
+        }
+      });
+    });
+
+    const firstBtn = rightCard.querySelector('button');
+    if (firstBtn && firstBtn.parentElement && firstBtn.parentElement !== rightCard) {
+      firstBtn.parentElement.classList.add('mob-btn-group');
+    }
+
+    // 왼쪽 카드 하단 단축키 안내 및 버튼 내 키보드 힌트 숨김
+    const shortcutBox = [...leftCard.querySelectorAll('div, p')].find(
+      el => el.textContent.includes('단축키') && !el.textContent.includes('ANCHOR')
+    );
+    if (shortcutBox) shortcutBox.classList.add('mob-hide-mobile');
+
+    rightCard.querySelectorAll('button span, button small, button div').forEach(el => {
+      if (el.textContent.includes('키보드')) el.classList.add('mob-hide-mobile');
+    });
+  }
+
+  applyMobileTags();
+  document.addEventListener('click', () => setTimeout(applyMobileTags, 50));
+})();
+</script>
 </body>
 </html>
