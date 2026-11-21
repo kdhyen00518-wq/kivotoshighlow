@@ -4131,5 +4131,17 @@
       startGame('height');
     })();
   </script>
+<script>
+(function () {
+  const btn = [...document.querySelectorAll('button')].find(b => b.textContent.includes('데이터 불러오기'));
+  if (!btn) return;
+  const isOuter = (el) => el.textContent.includes('신장') || el.textContent.includes('키보토스 하이로우');
+  let bar = btn.parentElement;
+  while (bar && bar.parentElement && !isOuter(bar.parentElement)) {
+    bar = bar.parentElement;
+  }
+  if (bar && !isOuter(bar)) bar.style.display = 'none';
+})();
+</script>
 </body>
 </html>
