@@ -4284,20 +4284,25 @@
     leftCard.classList.add('mob-card', 'mob-card-left');
     rightCard.classList.add('mob-card', 'mob-card-right');
 
-    const vsEl = [...arena.children].find(
-      ch => ch !== leftCard && ch !== rightCard && ch.textContent.includes('VS')
+    const vsEl = [...arena.querySelectorAll('div, span')].find(
+      el => el.textContent.trim().startsWith('VS') && el.textContent.trim().length < 20
     );
     if (vsEl) vsEl.classList.add('mob-vs');
 
     [leftCard, rightCard].forEach(card => {
-      if (card.firstElementChild) card.firstElementChild.classList.add('mob-card-head');
+      if (card.firstElementChild) {
+        card.firstElementChild.classList.add('mob-card-head');
+        card.firstElementChild.querySelectorAll('div').forEach(d => {
+          d.style.justifyContent = 'flex-start';
+          d.style.flexWrap = 'wrap';
+        });
+      }
 
       const media = card.querySelector('img, svg');
       if (media && media.parentElement && media.parentElement !== card) {
         media.parentElement.classList.add('mob-portrait-box');
       }
 
-      // 이름과 큰 수치 박스 자동 식별
       [...card.querySelectorAll('h1, h2, h3, div, p, span')].forEach(el => {
         if (el.children.length > 1) return;
         const size = parseFloat(getComputedStyle(el).fontSize);
@@ -4317,9 +4322,14 @@
       firstBtn.parentElement.classList.add('mob-btn-group');
     }
 
-    // 왼쪽 카드 하단 단축키 안내 및 버튼 내 키보드 힌트 숨김
-    const shortcutBox = [...leftCard.querySelectorAll('div, p')].find(
-      el => el.textContent.includes('단축키') && !el.textContent.includes('ANCHOR')
+    // 수정된 부분: 초상화나 학생 정보가 없는 '단축키' 박스 딱 하나만 정확히 숨김
+    const shortcutBox = [...leftCard.querySelectorAll('div, p')].find(el =>
+      el.textContent.includes('단축키') &&
+      el.textContent.includes('Enter') &&
+      !el.querySelector('img, svg, h1, h2, h3') &&
+      !el.textContent.includes('ANCHOR') &&
+      !el.textContent.includes('기본 학생') &&
+      !el.textContent.includes('이격')
     );
     if (shortcutBox) shortcutBox.classList.add('mob-hide-mobile');
 
